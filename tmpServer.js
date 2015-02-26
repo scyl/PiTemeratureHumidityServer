@@ -35,7 +35,9 @@ function getNumRecord() {
 function getTmp(hist) {
     // Read the record and get the record at index 'hist' from the lastest
     updateCache();
-
+    if (hist > getNumRecord()-1) {
+        throw "Out of range";
+    }
     var entries = log.toString('ascii').split(/\n/);
     var data = entries[entries.length-(2+hist)].split(" ");
 
@@ -52,12 +54,67 @@ function getTmp(hist) {
 }
 
 function buildJson(hist) {
-    var entry = getTmp(hist);
+    // Request for the specific entry
+    var data;
+    try {
+        var entry = getTmp(hist);
 
-    // Extract the date and time from the record
+        // Put it in to a json format for sending
+        data = {
+            temperature_record:[{
+                unix_time: getUNIXTime(entry),
+                celsius1: entry.tmp1,
+                celsius2: entry.tmp2,
+                humidity: entry.humidity
+            }]
+        };
+    } catch(err) {
+        // If request is out of range, return a empty record
+         data = {
+            temperature_record:[]
+        }
+    }
+
+    return data;
+}
+
+function buildLogJson(fromDate) {
+    var index = getNumRecord()-1;
+    var entry = getTmp(index);
+    var date = getUNIXTime(entry);
+
+    // Ignore records older than fromDate
+    while ((date < fromDate) && (index > 0)) {
+        index--;
+        entry = getTmp(index);
+        date = getUNIXTime(entry);
+    }
+
+    // Push remaining records into an array
+    var record = [];
+    while (index > 0) {
+        record.push({
+            unix_time: getUNIXTime(entry),
+            celsius1: entry.tmp1,
+            celsius2: entry.tmp2,
+            humidity: entry.humidity
+        });
+
+        index--;
+        entry = getTmp(index);
+        date = getUNIXTime(entry);
+    }
+
+    // Wrap array in json
+    var data = {temperature_record: record};
+    return data;
+}
+
+function getUNIXTime(entry) {
+    // Extract the date and time from the record and return it in UNIX time
     var date = String(entry.date).split("/")
     var year = date[2];
-    var month = date[1];
+    var month = date[1] - 1;
     var day = date[0];
 
     var clock = String(entry.time).split(":")
@@ -67,17 +124,7 @@ function buildJson(hist) {
 
     var d = new Date(year, month, day, hour, min, sec, 0);
 
-    // Put it in to a json format for senting over the net
-    var data = {
-        temperature_record:[{
-            unix_time: d.getTime(),
-            celsius1: entry.tmp1,
-            celsius2: entry.tmp2,
-            humidity: entry.humidity
-        }]
-    };
-
-    return data;
+    return d.getTime();
 }
 
 http.createServer(function (req, res) {
@@ -93,6 +140,16 @@ http.createServer(function (req, res) {
         }
 
         var json = buildJson(hist);
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify(json), "ascii");
+    } else if (pathfile == '/temperature_log.json') {
+        // Get a section of records and sent it
+        var fromDate = Date.now() - (48*60*60*1000) // Default fromDate to 2 days ago
+        if (query.fromDate) {
+            fromDate = parseInt(query.fromDate);
+        }
+
+        var json = buildLogJson(fromDate);
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end(JSON.stringify(json), "ascii");
     } else if (pathfile == '/numRecord.txt') {

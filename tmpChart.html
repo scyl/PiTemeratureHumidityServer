@@ -11,13 +11,20 @@
                 // Get data from Pi NodeJS server
                 function getData(){
                     $.getJSON('./temperature_now.json', function(data) {
-                        // Create the series
-                        var series  = chart.series[0];
-                        var shift = series.data.length > 288; // shift if the series longer than 288
-                        // Add the point
-                        chart.series[2].addPoint([data.temperature_record[0].unix_time, data.temperature_record[0].celsius1], false, shift);
-                        chart.series[1].addPoint([data.temperature_record[0].unix_time, data.temperature_record[0].celsius2], false, shift);
-                        chart.series[0].addPoint([data.temperature_record[0].unix_time, data.temperature_record[0].humidity], false, shift);
+                        // Add a point to the series
+                        chart.series[2].addPoint([data.temperature_record[0].unix_time, data.temperature_record[0].celsius1], false, false);
+                        chart.series[1].addPoint([data.temperature_record[0].unix_time, data.temperature_record[0].celsius2], false, false);
+                        chart.series[0].addPoint([data.temperature_record[0].unix_time, data.temperature_record[0].humidity], false, false);
+
+                        // If the series contain points for data older than 2 days, remove those points
+                        if (chart.series[0].data.length > 0) {
+                            while(Date.now() - chart.series[0].data[0].x  > (48*60*60*1000)) {
+                                chart.series[0].removePoint(0, false);
+                                chart.series[1].removePoint(0, false);
+                                chart.series[2].removePoint(0, false);
+                            }
+                        }
+
                         chart.redraw();
                     }).fail(function() {
                             console.log("Catched error");
@@ -28,26 +35,19 @@
 
                 function loadHist() {
                     // Get to total number of records there are
-                    $.get('./numRecord.txt', function(data) {
-                        var i = parseInt(data);
-                        // Don't count the latest record
-                        i = i-1;
-                        // If there are more then 576 (48hrs) records, only ask for 576 of them
-                        if (i > 576) {
-                            i = 576;
-                        }
+                    $.getJSON('./temperature_log.json', function(data) {
+                        var numToAdd = data.temperature_record.length;
+                        var i = 0;
                         // Request for all the records
-                        while (i > 0) {
-                            $.getJSON('./temperature_now.json?hist='+i, function(data) {
-                                // Add each record to the series
-                                chart.series[2].addPoint([data.temperature_record[0].unix_time, data.temperature_record[0].celsius1], false, false);
-                                chart.series[1].addPoint([data.temperature_record[0].unix_time, data.temperature_record[0].celsius2], false, false);
-                                chart.series[0].addPoint([data.temperature_record[0].unix_time, data.temperature_record[0].humidity], false, false);
-                            }).fail(function() {
-                                console.log("Catched error");
-                            });
-                            i = i-2;
+                        while (i < numToAdd) {
+                            // Add each record to the series
+                            chart.series[2].addPoint([data.temperature_record[i].unix_time, data.temperature_record[i].celsius1], false, false);
+                            chart.series[1].addPoint([data.temperature_record[i].unix_time, data.temperature_record[i].celsius2], false, false);
+                            chart.series[0].addPoint([data.temperature_record[i].unix_time, data.temperature_record[i].humidity], false, false);
+                            
+                            i++;
                         }
+                        chart.redraw();
                         // Resume getting new record
                         getData();
                     });

@@ -1,5 +1,5 @@
 PiTemeratureHumidityServer
-=============
+==========================
 
 Simple NodeJS server and logger for the DS18B20 digital temperature sensor and DHT22 humidity sensor on the Raspberry Pi.
 
@@ -9,8 +9,9 @@ A NodeJS server for the DS18B20 GPIO temperature sensor and DHT22 humidity senso
 
 Files
 -----
-* server.js - NodeJS server, returns temperature and humidity as JSON, logs to database and serves other static files
-* TBA
+* tmpServer.js - NodeJS server, returns temperature and humidity as JSON, and serves other static files
+* tmpLogger.py - Python program to record the temperature and humidity to the log
+* tmpChart.html - Web page with that plot the last 48hrs of temperature and humidity
 
 Dependencies
 ------------
@@ -20,7 +21,11 @@ Dependencies
 
 Install/Setup
 -------------
-Coming soon
+1. Install node-static in the folder
+2. Update tmpLogger.py with your desire location of the log file
+3. Run tmpLogger.py
+4. Update tmpServer.js with the location of the log file
+5. Run tmpServer.js
 
 References
 ----------

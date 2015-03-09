@@ -1,7 +1,6 @@
 #  
-#   A Node.js server that temperature and humidity values from a log file.
-#   Also uses Node static to serve static files
-#
+#   A Pythoin program that log the temperature and humidity from a DS18B20 and DHT22 sensor
+#   
 #   Ching Yiu Stephen Leung, 11 Feb 2015
 #   Ref:https://github.com/talltom/PiThermServer
 #   Ref:https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/overview
@@ -12,6 +11,7 @@ import glob
 import time
 import Adafruit_DHT
 import sys, traceback
+import sqlite3 as sql
 from datetime import datetime
 
 # minutes between each recording
@@ -30,7 +30,7 @@ device_file = device_folder + '/w1_slave' #  device folder
 pin = 10 
 
 #  Database file
-store_file = '/home/pi/tmph/tmp.txt'
+sqlConnection = None
 
 #  Get the temperature from the temperature sensor
 def getTmp():
@@ -61,22 +61,21 @@ def getHumidity():
 
 try:
     while True:
-        storeFile = open(store_file, 'a')
+        sqlConnection = sql.connect('log.db')
+        cursor = sqlConnection.cursor()
         try:
             tmp = getTmp()
             htmp, hhumidity = getHumidity()
-            storeFile.write(datetime.now().strftime('%d/%m/%Y %X'))
-            storeFile.write(" ")
-            storeFile.write(str(tmp))
-            storeFile.write(" ")
-            storeFile.write(str(htmp))
-            storeFile.write(" ")
-            storeFile.write(str(hhumidity))
-            storeFile.write("\n")
-            print(str(tmp) + " " + str(htmp) + " " + str(hhumidity) + " written to file")
+            cursor.execute("INSERT INTO temperature_records VALUES(:unix_time, :tmp1, :tmp2, :humidity)", 
+                {"unix_time": int(datetime.now().strftime('%s')),
+                "tmp1": tmp,
+                "tmp2": htmp,
+                "humidity": hhumidity})
+            sqlConnection.commit()
+            print(str(datetime.now().strftime('%s')) + " " + str(tmp) + " " + str(htmp) + " " + str(hhumidity) + " written to file")
         except RuntimeError as err:
             print err
-        storeFile.close()
+        sqlConnection.close()
         time.sleep(interval*60)
 except KeyboardInterrupt:
     print

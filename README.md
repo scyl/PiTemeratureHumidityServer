@@ -16,6 +16,7 @@ Files
 Dependencies
 ------------
 * NodeJS
+* SQLite3
 * node-static
 * Adafruit_Python_DHT (https://github.com/adafruit/Adafruit_Python_DHT)
 

@@ -1,15 +1,15 @@
 {
-  "name": "PiThermServer",
-  "version": "0.0.1",
-  "description": "Simple NodeJS server and SQLite3 logger for the DS18B20 digital temperature sensor on the Raspberry Pi.",
-  "main": "server.js",
+  "name": "PiThermHumidityServer",
+  "version": "0.0.2",
+  "description": "NodeJS temperature server and logger for DS18B20 digital temperature sensor and DHT22 humidity sensor on the Raspberry Pi.",
+  "main": "tmpServer.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node tmpServer.js"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/talltom/PiThermServer.git"
+    "url": "https://github.com/scyl/PiTemeratureHumidityServer.git"
   },
   "keywords": [
     "Raspberry",
@@ -20,12 +20,12 @@
     "GPIO",
     "Sensor"
   ],
-  "author": "Tom Holderness",
+  "author": "Stephen Leung",
   "license": "BSD-2-Clause",
   "bugs": {
-    "url": "https://github.com/talltom/PiThermServer/issues"
+    "url": ""
   },
-  "homepage": "https://github.com/talltom/PiThermServer",
+  "homepage": "https://github.com/scyl/PiTemeratureHumidityServer",
   "dependencies": {
     "sqlite3": "~2.1.19",
     "node-static": "~0.7.3"

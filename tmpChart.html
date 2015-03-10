@@ -4,13 +4,15 @@
         <title>PiThermServer - Plot</title>
         <meta name="description" content="Plot of temperature from DS18B20 and DHT22 sensor  connected to Raspberry Pi">
         <script src="http://code.jquery.com/jquery-1.8.3.min.js" type="text/javascript"></script>
-            <script src="http://code.highcharts.com/highcharts.js" type="text/javascript"></script>
-                <script type="text/javascript">
-        
-                var chart; // global chart variable
-                // Get data from Pi NodeJS server
-                function getData(){
-                    $.getJSON('./temperature_now.json', function(data) {
+        <script src="http://code.highcharts.com/highcharts.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            var chart; // global chart variable
+            var latestRecordDate = 0; // the date of the lastest record currently in the chart
+            // Get data from Pi NodeJS server
+            function getData(){
+                $.getJSON('./logFromDate.json', {fromDate: latestRecordDate+1}, function(data) {
+                    // If there are new data point to add
+                    if (data.temperature_records[0]) {
                         // Add a point to the series
                         chart.series[2].addPoint([data.temperature_records[0].unix_time*1000, data.temperature_records[0].celsius1], false, false);
                         chart.series[1].addPoint([data.temperature_records[0].unix_time*1000, data.temperature_records[0].celsius2], false, false);
@@ -25,119 +27,121 @@
                             }
                         }
 
+                        latestRecordDate = data.temperature_records[0].unix_time;
                         chart.redraw();
-                    }).fail(function() {
-                            console.log("Catched error");
-                        });
-                    // Repeat this function call after 5 minutes
-                    setTimeout(getData, 5*60*1000);
-                }
+                    }
+                }).fail(function(jqxhr, textStatus, error) {
+                        console.log("Error: " + textStatus + "\n" + error);
+                    });
+                // Repeat this function call after 5 minutes
+                setTimeout(getData, 5*60*1000);
+            }
 
-                function loadHist() {
-                    // Get to total number of records there are
-                    $.getJSON('./logFromDate.json', function(data) {
-                        var numToAdd = data.temperature_records.length;
-                        var i = 0;
-                        // Request for all the records
-                        while (i < numToAdd) {
-                            // Add each record to the series
-                            chart.series[2].addPoint([data.temperature_records[i].unix_time*1000, data.temperature_records[i].celsius1], false, false);
-                            chart.series[1].addPoint([data.temperature_records[i].unix_time*1000, data.temperature_records[i].celsius2], false, false);
-                            chart.series[0].addPoint([data.temperature_records[i].unix_time*1000, data.temperature_records[i].humidity], false, false);
-                            
-                            i++;
+            function loadHist() {
+                // Get to total number of records there are
+                $.getJSON('./logFromDate.json', function(data) {
+                    var numToAdd = data.temperature_records.length;
+                    var i = 0;
+                    // Request for all the records
+                    while (i < numToAdd) {
+                        // Add each record to the series
+                        chart.series[2].addPoint([data.temperature_records[i].unix_time*1000, data.temperature_records[i].celsius1], false, false);
+                        chart.series[1].addPoint([data.temperature_records[i].unix_time*1000, data.temperature_records[i].celsius2], false, false);
+                        chart.series[0].addPoint([data.temperature_records[i].unix_time*1000, data.temperature_records[i].humidity], false, false);
+                        
+                        i++;
+                    }
+                    latestRecordDate = data.temperature_records[i-1].unix_time;
+                    chart.redraw();
+                    // Resume getting new record
+                    getData();
+                });
+            }
+
+        </script>
+
+        <script type="text/javascript">
+            // Configure the plot
+            $(document).ready(function() {
+                Highcharts.setOptions({
+                    global: {
+                        useUTC: false
+                    }
+                });
+
+                chart = new Highcharts.Chart({
+                    chart: {
+                        renderTo: 'container',
+                        defaultSeriesType: 'spline',
+                        events: {
+                            load: loadHist
                         }
-                        chart.redraw();
-                        // Resume getting new record
-                        getData();
-                    });
-                }
-
-                </script>
-
-                <script type="text/javascript">
-                    // Configure the plot
-                    $(document).ready(function() {
-                        Highcharts.setOptions({
-                            global: {
-                                useUTC: false
-                            }
-                        });
-
-                        chart = new Highcharts.Chart({
-                            chart: {
-                                renderTo: 'container',
-                                defaultSeriesType: 'spline',
-                                events: {
-                                    load: loadHist
-                                }
-                            },
-                            title: {
-                                text: 'Raspberry Pi Temperature and humidity Plot'
-                            },
-                            tooltip: {
-                                xDateFormat: '%A, %b %e, %H:%M',
-                                shared: true
-                            },
-                            xAxis: {
-                                type: 'datetime',
-                                tickPixelInterval: 150,
-                                maxZoom: 20 * 1000,
-                                title: {
-                                   text: 'Time (sensors called at 5 minutes intervals)',
-                                   margin: 15
-                                }
-                            },
-                            yAxis: [{
-                                minPadding: 0.2,
-                                maxPadding: 0.2,
-                                title: {
-                                    text: 'Temperature',
-                                    margin: 15
-                                },
-                                labels: {
-                                    format: '{value}\u00B0C' 
-                                },
-                            }, {
-                                title: {
-                                    text: 'Humidity',
-                                    margin: 15
-                                },
-                                labels: {
-                                    format: '{value}%' 
-                                },
-                                opposite: true
-                            }],
-                            series: [{
-                                name: 'DHT22 sensor humidity (%)',
-                                type: 'column',
-                                yAxis: 1,
-                                date: [],
-                                tooltip: {
-                                    valueSuffix: '%'
-                                }
-                            }, {
-                                name: 'DHT22 sensor temperature (\u00B10.5\u00B0C)',
-                                date: [],
-                                tooltip: {
-                                    valueSuffix: '\u00B0C'
-                                }
-                            }, {
-                                name: 'DS18B20 sensor (\u00B10.5\u00B0C)',
-                                data: [],
-                                tooltip: {
-                                    valueSuffix: '\u00B0C'
-                                }
-                            }]
-                        });        
-                    });
-                </script>
-            </script>
+                    },
+                    colors: ['#7CB5EC', '#81818F', '#ED5151'],
+                    title: {
+                        text: 'Raspberry Pi Temperature and humidity Plot'
+                    },
+                    tooltip: {
+                        xDateFormat: '%A, %b %e, %H:%M',
+                        shared: true
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        tickPixelInterval: 150,
+                        maxZoom: 20 * 1000,
+                        title: {
+                           text: 'Time (sensors called at 5 minutes intervals)',
+                           margin: 15
+                        }
+                    },
+                    yAxis: [{
+                        minPadding: 0.2,
+                        maxPadding: 0.2,
+                        title: {
+                            text: 'Temperature',
+                            margin: 15
+                        },
+                        labels: {
+                            format: '{value}\u00B0C' 
+                        },
+                    }, {
+                        title: {
+                            text: 'Humidity',
+                            margin: 15
+                        },
+                        labels: {
+                            format: '{value}%' 
+                        },
+                        opposite: true
+                    }],
+                    series: [{
+                        name: 'DHT22 sensor humidity (%)',
+                        type: 'column',
+                        yAxis: 1,
+                        date: [],
+                        tooltip: {
+                            valueSuffix: '%'
+                        }
+                    }, {
+                        name: 'DHT22 sensor temperature (\u00B10.5\u00B0C)',
+                        date: [],
+                        tooltip: {
+                            valueSuffix: '\u00B0C'
+                        }
+                    }, {
+                        name: 'DS18B20 sensor (\u00B10.5\u00B0C)',
+                        data: [],
+                        tooltip: {
+                            valueSuffix: '\u00B0C'
+                        }
+                    }]
+                });        
+            });
         </script>
     </head>
 
     <body>
-        <div id="container" style="width: 100%; height: 400px"></div>
+        <div id="container" style="width: 100%; height: 600px"></div>
     </body>
 
 </html>

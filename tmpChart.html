@@ -13,10 +13,15 @@
                 $.getJSON('./logFromDate.json', {fromDate: latestRecordDate+1}, function(data) {
                     // If there are new data point to add
                     if (data.temperature_records[0]) {
-                        // Add a point to the series
-                        chart.series[2].addPoint([data.temperature_records[0].unix_time*1000, data.temperature_records[0].celsius1], false, false);
-                        chart.series[1].addPoint([data.temperature_records[0].unix_time*1000, data.temperature_records[0].celsius2], false, false);
-                        chart.series[0].addPoint([data.temperature_records[0].unix_time*1000, data.temperature_records[0].humidity], false, false);
+                        // Add points to the series
+                        var numToAdd = data.temperature_records.length;
+                        var i = 0;
+                        while (i < numToAdd) {
+                            chart.series[2].addPoint([data.temperature_records[i].unix_time*1000, data.temperature_records[i].celsius1], false, false);
+                            chart.series[1].addPoint([data.temperature_records[i].unix_time*1000, data.temperature_records[i].celsius2], false, false);
+                            chart.series[0].addPoint([data.temperature_records[i].unix_time*1000, data.temperature_records[i].humidity], false, false);
+                            i++;
+                        }
 
                         // If the series contain points for data older than 2 days, remove those points
                         if (chart.series[0].data.length > 0) {
@@ -27,7 +32,7 @@
                             }
                         }
 
-                        latestRecordDate = data.temperature_records[0].unix_time;
+                        latestRecordDate = data.temperature_records[i-1].unix_time;
                         chart.redraw();
                     }
                 }).fail(function(jqxhr, textStatus, error) {
@@ -75,7 +80,8 @@
                         defaultSeriesType: 'spline',
                         events: {
                             load: loadHist
-                        }
+                        },
+                        alignTicks: false
                     },
                     colors: ['#7CB5EC', '#81818F', '#ED5151'],
                     title: {
@@ -105,6 +111,8 @@
                             format: '{value}\u00B0C' 
                         },
                     }, {
+                        max: 100,
+                        min: 0,
                         title: {
                             text: 'Humidity',
                             margin: 15
@@ -112,6 +120,7 @@
                         labels: {
                             format: '{value}%' 
                         },
+                        gridLineWidth: 0,
                         opposite: true
                     }],
                     series: [{

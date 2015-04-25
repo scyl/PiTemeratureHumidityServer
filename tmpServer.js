@@ -66,7 +66,7 @@ http.createServer(function (req, res) {
         if (query.fromDate) {
             fromDate = parseInt(query.fromDate);
         }
-        console.log(fromDate);
+
         getRecordOnDate(fromDate, function(data) {
             res.writeHead(200, {'Content-Type': 'application/json'});
             res.end(JSON.stringify(data), "ascii");

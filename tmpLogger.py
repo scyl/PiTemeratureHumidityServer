@@ -66,6 +66,8 @@ try:
         try:
             tmp = getTmp()
             htmp, hhumidity = getHumidity()
+            if abs(float(tmp) - float(htmp)) > 1:
+                htmp = tmp
             cursor.execute("INSERT INTO temperature_records VALUES(:unix_time, :tmp1, :tmp2, :humidity)", 
                 {"unix_time": int(datetime.now().strftime('%s')),
                 "tmp1": tmp,

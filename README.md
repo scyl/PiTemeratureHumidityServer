@@ -30,7 +30,7 @@ Install/Setup
 
 References
 ----------
-    http://www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/temperature/
-    http://tomholderness.wordpress.com/2013/01/03/raspberry-pi-temperature-server/
-    https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/overview
-    https://learn.adafruit.com/dht-humidity-sensing-on-raspberry-pi-with-gdocs-logging/overview
+http://www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/temperature/
+http://tomholderness.wordpress.com/2013/01/03/raspberry-pi-temperature-server/
+https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/overview
+https://learn.adafruit.com/dht-humidity-sensing-on-raspberry-pi-with-gdocs-logging/overview
